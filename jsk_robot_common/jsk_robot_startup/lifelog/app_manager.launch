@@ -49,9 +49,33 @@
   <!--
   NOTE: Ensure the param '/robot/type' and '/robot/name' are defined when the nodes below are started.
   -->
+  <!-- need to wait for app_manager 1.1.1 for kinetic and later. For indigo, we could not expect newer releases.....
+       https://github.com/PR2/app_manager/issues/12 (Relerase request 1.1.1)
   <include file="$(find app_manager)/launch/app_manager.launch">
     <arg name="use_applist" value="$(arg use_applist)"/>
     <arg name="applist" value="$(arg applist)"/>
     <arg name="respawn" value="$(arg respawn)"/>
   </include>
+  -->
+  <!-- copied from  https://github.com/PR2/app_manager/blob/kinetic-devel/launch/app_manager.launch -->
+  <group>
+    <!-- app master -->
+    <arg name="master" default="true" doc="launch master if enabled"/>
+    <arg name="master_address" default="localhost" doc="address for app_manager master"/>
+    <arg name="master_port" default="11313" doc="port for app_manager master"/>
+
+    <!-- internal use -->
+    <arg name="app_manager_args" default="--applist $(arg applist)" if="$(arg use_applist)"/>
+    <arg name="app_manager_args" default=""                     unless="$(arg use_applist)"/>
+
+    <node pkg="app_manager" type="appmaster" name="appmaster"
+          args="-p $(arg master_port)" if="$(arg master)" respawn="$(arg respawn)"/>
+    <node pkg="app_manager" type="app_manager" name="app_manager"
+          args="$(arg app_manager_args)"
+          output="screen" respawn="$(arg respawn)">
+      <param name="interface_master" value="http://$(arg master_address):$(arg master_port)"/>
+    </node>
+  </group>
+  <!-- endo of copy -->
+
 </launch>
