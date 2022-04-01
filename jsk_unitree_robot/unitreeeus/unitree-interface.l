@@ -29,7 +29,7 @@
 
 (defclass go1-interface
   :super robot-move-base-interface
-  :slots (body-pose-topic cmd-vel-topic high-cmd-topic)
+  :slots (body-pose-topic high-cmd-topic)
   )
 
 (defmethod go1-interface
@@ -100,6 +100,14 @@
      (setf (elt (send msg :led) id) led)
      (ros::publish high-cmd-topic msg)
      ))
+  (:force-stand ()
+   (let ((msg (instance unitree_legged_msgs::HighCmd :init)))
+     (send msg :mode 1)
+     (ros::publish high-cmd-topic msg)))
+  (:damping-mode ()
+   (let ((msg (instance unitree_legged_msgs::HighCmd :init)))
+     (send msg :mode 7)
+     (ros::publish high-cmd-topic msg)))
   (:recovery-stand ()
    (let ((msg (instance unitree_legged_msgs::HighCmd :init)))
      (send msg :mode 8)
