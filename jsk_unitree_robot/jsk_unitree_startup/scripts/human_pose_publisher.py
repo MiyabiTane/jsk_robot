@@ -48,6 +48,7 @@ class HumanPosePublisher(object):
     broker = '192.168.123.161'
     port = 1883
     topic = "vision/human_pose"
+    last_received = None
 
 
     def __init__(self):
@@ -56,6 +57,13 @@ class HumanPosePublisher(object):
         self.connect_mqtt()
         self.subscribe()
         self.client.loop_start()
+        self.last_received = rospy.Time.now()
+        rospy.Timer(rospy.Duration(5), self.timer_cb)
+
+    def timer_cb(self, msg):
+        if self.last_received and (rospy.Time.now() - self.last_received).to_sec() > 5.0:
+            rospy.loginfo("We haven't received any MQTT message for 5 sec, start AI camera")
+            self.client.publish('vision/ai_mode', 'cam1')
 
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc):
@@ -72,6 +80,9 @@ class HumanPosePublisher(object):
 
     def subscribe(self):
         def on_message(client, userdata, msg):
+            # keep message received time to start AI mode
+            self.last_received = rospy.Time.now()
+
             rospy.loginfo("Received `{}` from `{}` topic".format(msg.payload.decode(), msg.topic))
             poses_msg = PeoplePoseArray()
             for topic in eval(msg.payload.decode()):  # convert str to list by eval()
